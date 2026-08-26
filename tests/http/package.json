@@ -1,0 +1,12 @@
+{
+  "name": "grinder-diagnostics-model-http-tests",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "test": "httpyac send --all --bail --output short *.http"
+  },
+  "devDependencies": {
+    "httpyac": "6.16.7"
+  }
+}

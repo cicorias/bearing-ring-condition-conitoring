@@ -1,0 +1,13 @@
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.py[cod]
+
+data/generated/
+data/source/
+artifacts/
+demos/**/dist/
+demos/**/node_modules/
+tests/http/node_modules/

@@ -1,0 +1,60 @@
+[tools]
+node = "24.19.0"
+pnpm = "11.21.0"
+python = "3.12"
+uv = "0.12.3"
+
+[env]
+_.file = ".env"
+
+[tasks."a:setup"]
+description = "Create the locked Python environment"
+run = "./scripts/setup.sh"
+
+[tasks."b:model:data:check"]
+description = "Validate source data coverage and schema"
+run = "./scripts/model/data-check.sh"
+
+[tasks."c:model:features:build"]
+description = "Build the ring feature table"
+run = "./scripts/model/build-features.sh"
+
+[tasks."d:model:train"]
+description = "Train and export both random forests"
+run = "./scripts/model/train.sh"
+
+[tasks."e:model:predict"]
+description = "Predict from a feature JSON file"
+run = "./scripts/model/predict.sh"
+
+[tasks."f:api:serve"]
+description = "Run the local prediction API"
+run = "./scripts/model/serve-api.sh"
+
+[tasks."g:api:sample"]
+description = "Send the sample request to the local API"
+run = "./scripts/model/sample-client.sh"
+
+[tasks."h:demo:setup"]
+description = "Install the Slidev demo dependencies"
+run = "pnpm --dir demos/grinder-diagnostics install --frozen-lockfile"
+
+[tasks."i:demo:serve"]
+description = "Run the local Slidev presentation"
+run = "pnpm --dir demos/grinder-diagnostics dev"
+
+[tasks."j:demo:build"]
+description = "Build the static Slidev presentation"
+run = "pnpm --dir demos/grinder-diagnostics build"
+
+[tasks."k:verify"]
+description = "Run all source checks and tests"
+run = "./scripts/test.sh"
+
+[tasks."l:http:setup"]
+description = "Install pinned HTTPYac test dependencies"
+run = "pnpm --dir tests/http install --frozen-lockfile"
+
+[tasks."m:http:test"]
+description = "Run HTTPYac tests against the local model API"
+run = "pnpm --dir tests/http test"

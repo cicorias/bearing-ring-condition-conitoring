@@ -1,0 +1,23 @@
+@baseUrl = http://127.0.0.1:8000
+
+### Reject an incomplete feature payload
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "request_id": "invalid-feature-schema",
+  "features": {
+    "not_a_model_feature": 1.0
+  }
+}
+
+> {%
+  client.test("Invalid feature schema is rejected", function () {
+    client.assert(response.status === 422, "Expected HTTP 422");
+    client.assert(
+      response.body.detail.includes("Feature schema mismatch"),
+      "Expected a feature schema error"
+    );
+  });
+%}

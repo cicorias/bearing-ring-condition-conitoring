@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "tamasfe.even-better-toml",
+        "anweber.vscode-httpyac",
+        "ms-python.python",
+        "charliermarsh.ruff"
+    ]
+}

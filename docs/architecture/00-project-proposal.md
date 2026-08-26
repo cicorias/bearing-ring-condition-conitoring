@@ -1,4 +1,4 @@
-# Machine-level condition-based maintenance with agent orchestration
+# 00 - Machine-level condition-based maintenance with agent orchestration
 
 **A reference implementation on Microsoft Foundry and the Microsoft Agent Framework**
 
@@ -304,9 +304,9 @@ the strongest argument in the design.
 
 ### 5.3 Data approach — data science track
 
-**Source data.** The published dataset accompanying the paper: 735 bearing rings across seven test
-runs (two baseline, five induced faults), thirteen instrumented channels sampled at 100 kHz, with
-process data from the controller.
+**Source data.** The complete published dataset is available locally: 735 bearing rings across seven
+test runs (two baseline, five induced faults), thirteen instrumented channels sampled at 100 kHz,
+with process data from the controller.
 
 **Class balance is by design, not by luck.** The experiment produces 105 rings per test run — seven
 dressing intervals of fifteen rings each — after preconditioning the machine to steady state. Input
@@ -537,7 +537,7 @@ something demonstrable.
 
 | Phase | Duration | Output | Primary owner |
 |---|---|---|---|
-| 0. Data acquisition and split design | 1–2 days | Dataset in hand, interval-level split agreed | Data science |
+| 0. Data validation and split design | 1–2 days | Dataset verified, interval-level split agreed | Data science |
 | 1. Model reproduction | 1–2 days | Two random forests matching published F1 | Data science |
 | 2. Tool wrapping | 0.5 day | Models behind MCP; typed contracts | Shared |
 | 3. Local workflow graph | 1 day | Deterministic stages 1–3 and 6 running locally | Engineering |
@@ -594,7 +594,7 @@ Required from stakeholders before or during phase 0.
 | # | Decision | Needed from | By |
 |---|---|---|---|
 | D1 | Owners for each financial placeholder in 3.3 | TPM / operations | Phase 0 |
-| D2 | Confirm published dataset is obtainable, or authorise synthetic fallback | Data science | Phase 0 |
+| D2 | Confirm local dataset integrity and schema checks pass | Data science | Phase 0 |
 | D3 | Target CMMS for the work-order draft, or accept a stub | Engineering / operations | Phase 3 |
 | D4 | Who plays the approving supervisor in the demo | TPM | Phase 8 |
 | D5 | Internal-only or customer-facing; changes the caveat language throughout | TPM | Before phase 8 |

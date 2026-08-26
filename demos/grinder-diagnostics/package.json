@@ -1,0 +1,15 @@
+{
+  "name": "grinder-diagnostics-demo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.21.0",
+  "scripts": {
+    "dev": "slidev --port 3030",
+    "build": "slidev build --base ./"
+  },
+  "devDependencies": {
+    "@slidev/cli": "52.19.1",
+    "@slidev/theme-default": "0.25.0",
+    "@slidev/types": "52.19.1"
+  }
+}

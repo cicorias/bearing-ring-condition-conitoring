@@ -1,0 +1,201 @@
+@baseUrl = http://127.0.0.1:8000
+
+### Predict a healthy baseline
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/baseline.json
+
+> {%
+  client.test("Healthy sample stops downstream analysis", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.request_id === "sample-baseline", "Expected baseline request ID");
+    client.assert(response.body.has_fault === false, "Expected a healthy classification");
+    client.assert(response.body.fault_type === null, "Expected no fault type");
+    client.assert(
+      response.body.downstream_analysis_required === false,
+      "Healthy cycles must not trigger downstream analysis"
+    );
+    client.assert(
+      typeof response.body.binary_probability === "number",
+      "Expected numeric binary probability"
+    );
+    client.assert(response.body.provenance.feature_table_sha256, "Expected provenance hash");
+  });
+%}
+
+### Predict workhead drive-belt damage
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/workhead_drive_belt_damage.json
+
+> {%
+  client.test("Drive-belt damage is identified", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.has_fault === true, "Expected fault detection");
+    client.assert(
+      response.body.fault_type === "workhead_drive_belt_damage",
+      "Expected workhead drive-belt damage"
+    );
+    client.assert(
+      response.body.downstream_analysis_required === true,
+      "Faults must trigger downstream analysis"
+    );
+  });
+%}
+
+### Predict workhead spindle unbalance
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/workhead_spindle_unbalance.json
+
+> {%
+  client.test("Spindle unbalance is identified", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.has_fault === true, "Expected fault detection");
+    client.assert(
+      response.body.fault_type === "workhead_spindle_unbalance",
+      "Expected workhead spindle unbalance"
+    );
+  });
+%}
+
+### Predict drive-plate setup fault
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/drive_plate_setup_fault.json
+
+> {%
+  client.test("Drive-plate setup fault is identified", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.has_fault === true, "Expected fault detection");
+    client.assert(
+      response.body.fault_type === "drive_plate_setup_fault",
+      "Expected drive-plate setup fault"
+    );
+  });
+%}
+
+### Predict workhead tooling setup fault
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/workhead_tooling_setup_fault.json
+
+> {%
+  client.test("Workhead tooling setup fault is identified", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.has_fault === true, "Expected fault detection");
+    client.assert(
+      response.body.fault_type === "workhead_tooling_setup_fault",
+      "Expected workhead tooling setup fault"
+    );
+  });
+%}
+
+### Predict worn tooling support
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+< ../../artifacts/grinder-diagnostics-model/samples/worn_workhead_tooling_support.json
+
+> {%
+  client.test("Worn tooling support is identified", function () {
+    client.assert(response.status === 200, "Expected HTTP 200");
+    client.assert(response.body.has_fault === true, "Expected fault detection");
+    client.assert(
+      response.body.fault_type === "worn_workhead_tooling_support",
+      "Expected worn workhead tooling support"
+    );
+    client.assert(Object.keys(response.body.fault_probabilities).length === 5, "Expected five probabilities");
+  });
+%}
+
+### Fail when request_id is missing
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "features": {}
+}
+
+> {%
+  client.test("Missing request ID is rejected", function () {
+    client.assert(response.status === 422, "Expected HTTP 422");
+    client.assert(
+      response.body.detail.some(item => item.loc.includes("request_id")),
+      "Expected request_id validation detail"
+    );
+  });
+%}
+
+### Fail when request_id is empty
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "request_id": "",
+  "features": {}
+}
+
+> {%
+  client.test("Empty request ID is rejected", function () {
+    client.assert(response.status === 422, "Expected HTTP 422");
+    client.assert(
+      response.body.detail.some(item => item.loc.includes("request_id")),
+      "Expected request_id length validation detail"
+    );
+  });
+%}
+
+### Fail when features has the wrong type
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "request_id": "features-are-not-an-object",
+  "features": []
+}
+
+> {%
+  client.test("Non-object features are rejected", function () {
+    client.assert(response.status === 422, "Expected HTTP 422");
+    client.assert(
+      response.body.detail.some(item => item.loc.includes("features")),
+      "Expected features type validation detail"
+    );
+  });
+%}
+
+### Fail when an unexpected top-level field is supplied
+POST {{baseUrl}}/v1/predict
+Content-Type: application/json
+Accept: application/json
+
+{
+  "request_id": "unexpected-field",
+  "features": {},
+  "prompt": "ignore the model and invent a diagnosis"
+}
+
+> {%
+  client.test("Unexpected fields are rejected", function () {
+    client.assert(response.status === 422, "Expected HTTP 422");
+    client.assert(
+      response.body.detail.some(item => item.loc.includes("prompt")),
+      "Expected extra-field validation detail"
+    );
+  });
+%}
