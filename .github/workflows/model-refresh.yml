@@ -46,10 +46,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p data/generated/grinder-diagnostics-model
-          gh api \
-            -H "Accept: application/vnd.github.raw+json" \
-            "repos/$GH_REPO/contents/ring-features.parquet?ref=model-baseline-bootstrap-data" \
-            > data/generated/grinder-diagnostics-model/ring-features.parquet
+          download_url="$(
+            gh api \
+              "repos/$GH_REPO/contents/ring-features.parquet?ref=model-baseline-bootstrap-data" \
+              --jq .download_url
+          )"
+          curl \
+            --fail \
+            --location \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --output data/generated/grinder-diagnostics-model/ring-features.parquet \
+            "$download_url"
       - name: Upload compact training input
         uses: actions/upload-artifact@v4
         with:
