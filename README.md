@@ -88,6 +88,21 @@ data/source/
   quality/quality/quality_disposition.csv
 ```
 
+Download, extract, and validate the published dataset into that structure:
+
+```bash
+mise run b:model:data:fetch
+```
+
+The download is about 20 GB and the extracted TDMS files require about 89 GB more. Downloads are
+resumable, completed files are checked against their published sizes, ZIP archives are tested before
+extraction, and the existing source-data validator runs when extraction finishes. To use another
+destination, configure `GRINDER_DIAGNOSTICS_DATA_ROOT` or run:
+
+```bash
+mise run b:model:data:fetch -- --data-root /absolute/path/to/source
+```
+
 `--data-root` on `data-check.sh` or `build-features.sh` always has highest
 precedence. For mise tasks, mise loads `GRINDER_DIAGNOSTICS_DATA_ROOT` from the
 repository-root `.env`; without a configured value, the code uses
@@ -140,7 +155,7 @@ through `mise` and `uv`; system Python is not modified.
 
 ```bash
 mise run a:setup
-mise run b:model:data:check
+mise run b:model:data:fetch
 mise run k:verify
 ```
 
