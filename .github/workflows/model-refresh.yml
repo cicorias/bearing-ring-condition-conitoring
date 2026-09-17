@@ -2,6 +2,12 @@ name: Model baseline refresh
 
 on:
   workflow_dispatch:
+    inputs:
+      bootstrap_from_release:
+        description: Bootstrap the first baseline from the temporary release feature table
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "17 3 * * 1"
   push:
@@ -21,11 +27,11 @@ permissions:
 
 concurrency:
   group: model-baseline-refresh
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build-features:
-    runs-on: ubuntu-latest-16-cores
+    runs-on: ${{ inputs.bootstrap_from_release && 'ubuntu-latest' || 'ubuntu-latest-16-cores' }}
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v4
@@ -34,11 +40,24 @@ jobs:
           cache: true
           install: true
       - run: mise run a:setup
+      - name: Download bootstrap feature table
+        if: inputs.bootstrap_from_release
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data/generated/grinder-diagnostics-model
+          gh release download model-baseline-bootstrap \
+            --pattern ring-features.parquet \
+            --dir data/generated/grinder-diagnostics-model
       - name: Download and validate source data
+        if: ${{ !inputs.bootstrap_from_release }}
         run: mise run b:model:data:fetch
       - name: Revalidate source coverage and schema
+        if: ${{ !inputs.bootstrap_from_release }}
         run: mise run b:model:data:check
       - name: Build feature table
+        if: ${{ !inputs.bootstrap_from_release }}
         run: mise run c:model:features:build
       - name: Upload compact training input
         uses: actions/upload-artifact@v4
@@ -46,9 +65,7 @@ jobs:
           name: model-feature-table-${{ github.run_id }}
           if-no-files-found: error
           retention-days: 7
-          path: |
-            data/generated/grinder-diagnostics-model/ring-features.parquet
-            data/generated/grinder-diagnostics-model/source-manifest.json
+          path: data/generated/grinder-diagnostics-model/
 
   validate-and-publish:
     needs: build-features
@@ -119,6 +136,5 @@ jobs:
           retention-days: 90
           path: |
             model-drift.md
-            data/generated/grinder-diagnostics-model/ring-features.parquet
-            data/generated/grinder-diagnostics-model/source-manifest.json
+            data/generated/grinder-diagnostics-model/
             artifacts/grinder-diagnostics-model/
