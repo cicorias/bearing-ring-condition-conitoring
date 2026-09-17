@@ -1,0 +1,124 @@
+name: Model baseline refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/model-refresh.yml"
+      - "mise.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "scripts/model/**"
+      - "src/grinder_diagnostics_model/**"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: model-baseline-refresh
+  cancel-in-progress: false
+
+jobs:
+  build-features:
+    runs-on: ubuntu-latest-16-cores
+    timeout-minutes: 720
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          install: true
+      - run: mise run a:setup
+      - name: Download and validate source data
+        run: mise run b:model:data:fetch
+      - name: Revalidate source coverage and schema
+        run: mise run b:model:data:check
+      - name: Build feature table
+        run: mise run c:model:features:build
+      - name: Upload compact training input
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-feature-table-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            data/generated/grinder-diagnostics-model/ring-features.parquet
+            data/generated/grinder-diagnostics-model/source-manifest.json
+
+  validate-and-publish:
+    needs: build-features
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          install: true
+      - run: mise run a:setup
+      - uses: actions/download-artifact@v4
+        with:
+          name: model-feature-table-${{ github.run_id }}
+          path: data/generated/grinder-diagnostics-model
+
+      - name: Train refreshed models
+        run: mise run d:model:train
+      - name: Validate refreshed prediction
+        run: mise run e:model:predict > artifacts/grinder-diagnostics-model/prediction.json
+
+      - name: Download previous main baseline
+        id: previous
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          ./scripts/ci/download-model-baseline.sh .baseline
+          status=$?
+          set -e
+          if [[ "$status" == "0" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$status" == "2" ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          else
+            exit "$status"
+          fi
+
+      - name: Check model metric drift
+        if: steps.previous.outputs.available == 'true'
+        run: |
+          set +e
+          mise exec -- python scripts/ci/compare-model-metrics.py \
+            .baseline/artifacts/grinder-diagnostics-model/metrics.json \
+            artifacts/grinder-diagnostics-model/metrics.json \
+            --summary model-drift.md
+          status=$?
+          set -e
+          cat model-drift.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Record initial baseline
+        if: steps.previous.outputs.available == 'false'
+        run: |
+          printf '%s\n' \
+            '## Model metric drift' \
+            '' \
+            'No previous successful main baseline exists; this run creates it.' \
+            > model-drift.md
+          cat model-drift.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish main model baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-baseline
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            model-drift.md
+            data/generated/grinder-diagnostics-model/ring-features.parquet
+            data/generated/grinder-diagnostics-model/source-manifest.json
+            artifacts/grinder-diagnostics-model/

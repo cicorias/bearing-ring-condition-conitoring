@@ -210,6 +210,23 @@ mise run l:http:setup
 mise run m:http:test
 ```
 
+## Continuous integration and model drift
+
+`.github/workflows/ci.yml` runs source checks and tests, then trains and predicts from the feature
+table published by the latest successful `main` model refresh. The candidate metrics are compared
+with that baseline, and CI fails if any tracked accuracy or F1 metric regresses.
+
+`.github/workflows/model-refresh.yml` runs the complete data pipeline on
+`ubuntu-latest-16-cores`: fetch and validate the source dataset, build the compact feature table,
+train, predict, compare with the previous baseline, and publish a new `model-baseline` artifact.
+It runs for relevant changes on `main`, weekly, or on demand. Run it manually once to bootstrap the
+first baseline.
+
+The raw dataset is deliberately not passed between jobs or retained as an Actions artifact. Its
+roughly 20 GB download and 89 GB extracted size make that slow and expensive. Only the approximately
+1.2 MB feature table and compact model outputs cross job and workflow boundaries. Baseline artifacts
+are retained for 90 days; each successful refresh becomes the baseline selected by later CI runs.
+
 The response includes `downstream_analysis_required`, allowing a later agent workflow to branch on
 the deterministic model decision.
 

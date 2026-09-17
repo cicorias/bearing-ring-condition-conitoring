@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          install: true
+      - run: mise run a:setup
+      - run: mise run k:verify
+
+  model-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v3
+        with:
+          cache: true
+          install: true
+      - run: mise run a:setup
+
+      - name: Download latest main baseline
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/ci/download-model-baseline.sh .baseline
+
+      - name: Restore baseline feature table
+        run: |
+          mkdir -p data/generated/grinder-diagnostics-model
+          cp \
+            .baseline/data/generated/grinder-diagnostics-model/ring-features.parquet \
+            data/generated/grinder-diagnostics-model/ring-features.parquet
+
+      - name: Train candidate models
+        run: mise run d:model:train
+
+      - name: Validate candidate prediction
+        run: mise run e:model:predict > artifacts/grinder-diagnostics-model/prediction.json
+
+      - name: Check model metric drift
+        run: |
+          set +e
+          mise exec -- python scripts/ci/compare-model-metrics.py \
+            .baseline/artifacts/grinder-diagnostics-model/metrics.json \
+            artifacts/grinder-diagnostics-model/metrics.json \
+            --summary model-drift.md
+          status=$?
+          set -e
+          cat model-drift.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload candidate model results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-candidate-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            model-drift.md
+            artifacts/grinder-diagnostics-model/
