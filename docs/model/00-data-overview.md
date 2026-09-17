@@ -27,6 +27,16 @@ The code does not hardcode that machine-specific path. Configure another locatio
 execution, an existing process environment value wins over `.env`. With the variable unset, the
 fallback is `./data/source`. A command-line `--data-root` value takes highest precedence.
 
+To download the published version 2 dataset from Researchdata.se, safely extract it into the
+required layout, and run the complete source validator:
+
+```bash
+mise run b:model:data:fetch
+```
+
+The download is about 20 GB and the extracted files require about 89 GB more. The task resumes
+partial downloads and skips files and test folders that have already completed.
+
 ## Tests and labels
 
 | Test | Machine condition | Current status |

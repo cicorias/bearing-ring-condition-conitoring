@@ -15,6 +15,10 @@ run = "./scripts/setup.sh"
 description = "Validate source data coverage and schema"
 run = "./scripts/model/data-check.sh"
 
+[tasks."b:model:data:fetch"]
+description = "Download, extract, and validate the published source dataset"
+run = "./scripts/model/fetch-data.sh"
+
 [tasks."c:model:features:build"]
 description = "Build the ring feature table"
 run = "./scripts/model/build-features.sh"
@@ -58,3 +62,6 @@ run = "pnpm --dir tests/http install --frozen-lockfile"
 [tasks."m:http:test"]
 description = "Run HTTPYac tests against the local model API"
 run = "pnpm --dir tests/http test"
+
+[settings.python]
+uv_venv_auto = "source"
