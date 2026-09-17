@@ -3,8 +3,8 @@ name: Model baseline refresh
 on:
   workflow_dispatch:
     inputs:
-      bootstrap_from_release:
-        description: Bootstrap the first baseline from the temporary release feature table
+      bootstrap_from_data_branch:
+        description: Bootstrap the first baseline from the temporary data branch
         required: false
         type: boolean
         default: false
@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   build-features:
-    runs-on: ${{ inputs.bootstrap_from_release && 'ubuntu-latest' || 'ubuntu-latest-16-cores' }}
+    runs-on: ${{ inputs.bootstrap_from_data_branch && 'ubuntu-latest' || 'ubuntu-latest-16-cores' }}
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v4
@@ -41,23 +41,24 @@ jobs:
           install: true
       - run: mise run a:setup
       - name: Download bootstrap feature table
-        if: inputs.bootstrap_from_release
+        if: inputs.bootstrap_from_data_branch
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p data/generated/grinder-diagnostics-model
-          gh release download model-baseline-bootstrap \
-            --pattern ring-features.parquet \
-            --dir data/generated/grinder-diagnostics-model
+          gh api \
+            -H "Accept: application/vnd.github.raw+json" \
+            "repos/$GH_REPO/contents/ring-features.parquet?ref=model-baseline-bootstrap-data" \
+            > data/generated/grinder-diagnostics-model/ring-features.parquet
       - name: Download and validate source data
-        if: ${{ !inputs.bootstrap_from_release }}
+        if: ${{ !inputs.bootstrap_from_data_branch }}
         run: mise run b:model:data:fetch
       - name: Revalidate source coverage and schema
-        if: ${{ !inputs.bootstrap_from_release }}
+        if: ${{ !inputs.bootstrap_from_data_branch }}
         run: mise run b:model:data:check
       - name: Build feature table
-        if: ${{ !inputs.bootstrap_from_release }}
+        if: ${{ !inputs.bootstrap_from_data_branch }}
         run: mise run c:model:features:build
       - name: Upload compact training input
         uses: actions/upload-artifact@v4
