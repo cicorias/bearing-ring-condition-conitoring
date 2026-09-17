@@ -23,7 +23,7 @@ def collect_metrics(value: Any, path: tuple[str, ...] = ()) -> dict[str, float]:
     if not isinstance(value, dict):
         return metrics
 
-    if METRIC_NAMES <= value.keys():
+    if value.keys() >= METRIC_NAMES:
         for name in sorted(METRIC_NAMES):
             child = value[name]
             if not isinstance(child, int | float):
