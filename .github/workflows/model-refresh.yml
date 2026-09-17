@@ -2,19 +2,12 @@ name: Model baseline refresh
 
 on:
   workflow_dispatch:
-    inputs:
-      bootstrap_from_data_branch:
-        description: Bootstrap the first baseline from the temporary data branch
-        required: false
-        type: boolean
-        default: false
   schedule:
     - cron: "17 3 * * 1"
   push:
     branches:
       - main
     paths:
-      - ".github/workflows/model-refresh.yml"
       - "mise.toml"
       - "pyproject.toml"
       - "uv.lock"
@@ -27,11 +20,11 @@ permissions:
 
 concurrency:
   group: model-baseline-refresh
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-features:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-16-cores
     timeout-minutes: 720
     steps:
       - uses: actions/checkout@v4
@@ -40,23 +33,12 @@ jobs:
           cache: true
           install: true
       - run: mise run a:setup
-      - name: Download bootstrap feature table
-        env:
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p data/generated/grinder-diagnostics-model
-          download_url="$(
-            gh api \
-              "repos/$GH_REPO/contents/ring-features.parquet?ref=model-baseline-bootstrap-data" \
-              --jq .download_url
-          )"
-          curl \
-            --fail \
-            --location \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --output data/generated/grinder-diagnostics-model/ring-features.parquet \
-            "$download_url"
+      - name: Download and validate source data
+        run: mise run b:model:data:fetch
+      - name: Revalidate source coverage and schema
+        run: mise run b:model:data:check
+      - name: Build feature table
+        run: mise run c:model:features:build
       - name: Upload compact training input
         uses: actions/upload-artifact@v4
         with:
