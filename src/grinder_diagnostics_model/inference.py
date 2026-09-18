@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import torch
-
-from grinder_diagnostics_model.torch_forest import TorchRandomForest
+import joblib
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 
 
 @dataclass(frozen=True)
@@ -28,13 +28,13 @@ class InferenceEngine:
         self,
         *,
         metadata: dict[str, Any],
-        binary: TorchRandomForest,
-        fault: TorchRandomForest,
+        binary: RandomForestClassifier,
+        fault: RandomForestClassifier,
         artifact_path: Path,
     ) -> None:
         self.metadata = metadata
-        self.binary = binary.eval()
-        self.fault = fault.eval()
+        self.binary = binary
+        self.fault = fault
         self.artifact_path = artifact_path
         self.feature_names = [str(value) for value in metadata["feature_names"]]
 
@@ -43,17 +43,17 @@ class InferenceEngine:
         artifact_path = artifact_path.resolve()
         if not artifact_path.is_file():
             raise FileNotFoundError(f"Model artifact not found: {artifact_path}")
-        payload = torch.load(artifact_path, map_location="cpu", weights_only=True)
+        payload = joblib.load(artifact_path)
         if payload.get("format_version") != 1:
             raise ValueError("Unsupported model artifact format")
         return cls(
             metadata=payload["metadata"],
-            binary=TorchRandomForest.from_payload(payload["binary"]),
-            fault=TorchRandomForest.from_payload(payload["fault"]),
+            binary=payload["binary"],
+            fault=payload["fault"],
             artifact_path=artifact_path,
         )
 
-    def _vector(self, features: dict[str, float]) -> torch.Tensor:
+    def _vector(self, features: dict[str, float]) -> pd.DataFrame:
         expected = set(self.feature_names)
         supplied = set(features)
         missing = sorted(expected - supplied)
@@ -67,13 +67,12 @@ class InferenceEngine:
         ]
         if non_finite:
             raise ValueError(f"Features must be finite: {non_finite}")
-        return torch.tensor([values], dtype=torch.float64)
+        return pd.DataFrame([values], columns=self.feature_names, dtype="float64")
 
     def predict(self, features: dict[str, float]) -> Prediction:
         values = self._vector(features)
-        with torch.no_grad():
-            binary_values = self.binary(values)[0].tolist()
-            fault_values = self.fault(values)[0].tolist()
+        binary_values = self.binary.predict_proba(values)[0].tolist()
+        fault_values = self.fault.predict_proba(values)[0].tolist()
         binary_classes = [int(value) for value in self.metadata["binary_classes"]]
         binary_by_class = dict(zip(binary_classes, binary_values, strict=True))
         fault_probability = float(binary_by_class[1])

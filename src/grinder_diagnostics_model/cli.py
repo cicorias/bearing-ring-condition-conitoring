@@ -57,7 +57,7 @@ def predict() -> None:
     parser.add_argument(
         "--model",
         type=Path,
-        default=DEFAULT_ARTIFACT_DIR / "model.pt",
+        default=DEFAULT_ARTIFACT_DIR / "model.joblib",
     )
     args = parser.parse_args()
     payload = json.loads(args.request.read_text(encoding="utf-8"))

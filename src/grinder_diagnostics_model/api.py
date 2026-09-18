@@ -37,7 +37,7 @@ def create_app(engine: InferenceEngine | None = None) -> FastAPI:
         if engine is not None:
             app.state.engine = engine
         else:
-            default_path = DEFAULT_ARTIFACT_DIR / "model.pt"
+            default_path = DEFAULT_ARTIFACT_DIR / "model.joblib"
             artifact_path = Path(os.getenv("GRINDER_DIAGNOSTICS_MODEL_PATH", default_path))
             app.state.engine = InferenceEngine.load(artifact_path)
         yield

@@ -3,7 +3,7 @@
 ## Goal
 
 Rebuild the paper's signal-processing and classification pipeline, compare our results with its
-reported numbers, and package the final two random forests for inference through PyTorch.
+reported numbers, and package the final two scikit-learn random forests for inference.
 
 **The implementation scope is only the paper's two-stage random-forest production pipeline:**
 
@@ -149,31 +149,28 @@ MATLAB/Python implementation differences.
 
 **Output:** machine-readable metrics and a short results document with figures.
 
-## Step 10 - Package inference for PyTorch
+## Step 10 - Package inference for scikit-learn
 
-A random forest is not naturally a neural-network `state_dict`. We will keep the verified Python
-forest as the reference model, then encode each tree's feature index, threshold, child nodes, and
-leaf probabilities as tensors in a small `torch.nn.Module`.
+Keep the fitted scikit-learn forests as the production models and package them with the metadata
+required for deterministic inference.
 
 Package:
 
 - preprocessing and feature-order metadata;
-- binary forest tensors;
-- five-class forest tensors;
+- binary forest;
+- five-class forest;
 - class-label mapping;
 - model version and training-data manifest hash.
 
-Save a PyTorch-loadable artifact and prove that its predicted classes and probabilities match the
-reference forests on the full held-out set within a stated numerical tolerance.
+Save a joblib artifact containing the fitted scikit-learn models.
 
-**Output:** inference artifacts that load without scikit-learn and return the same predictions as
-the reproduced random forests.
+**Output:** an inference artifact that loads and runs the reproduced random forests directly.
 
 ## Step 11 - Provide scripts and a prediction API
 
 Ship a complete inference surface:
 
-- a script that loads the PyTorch artifacts and predicts from a feature JSON file;
+- a script that loads the scikit-learn artifact and predicts from a feature JSON file;
 - a sample feature file with the exact required schema and feature order;
 - a script that sends the sample request to the API;
 - a FastAPI service with health, model-information, and prediction endpoints;
@@ -202,6 +199,6 @@ The work is complete only when:
 3. feature selection uses training data only;
 4. both split protocols are reported;
 5. both random forests and both reduced-sensor configurations are evaluated;
-6. the PyTorch artifacts match reference predictions;
+6. the packaged scikit-learn forests load and predict successfully;
 7. CLI and API predictions agree on the supplied sample;
 8. every known departure from the paper is documented.
