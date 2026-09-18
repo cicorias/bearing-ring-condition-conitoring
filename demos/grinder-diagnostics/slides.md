@@ -15,7 +15,7 @@ Two Random Forests turn raw bearing-ring grinder signals into a typed diagnostic
 <div class="metric-grid">
   <div class="card"><div class="metric">735</div><div>measured grinding cycles</div></div>
   <div class="card"><div class="metric">2</div><div>production Random Forests</div></div>
-  <div class="card"><div class="metric">2</div><div>scikit-learn classifiers</div></div>
+  <div class="card"><div class="metric">58</div><div>production features</div></div>
 </div>
 
 <!--

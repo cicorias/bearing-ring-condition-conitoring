@@ -40,6 +40,7 @@ class InferenceEngine:
 
     @classmethod
     def load(cls, artifact_path: Path) -> InferenceEngine:
+        """Load a locally generated, trusted joblib artifact."""
         artifact_path = artifact_path.resolve()
         if not artifact_path.is_file():
             raise FileNotFoundError(f"Model artifact not found: {artifact_path}")

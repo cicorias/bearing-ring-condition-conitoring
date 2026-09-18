@@ -21,7 +21,8 @@ def test_inference_loads_sklearn_forest_artifact(tmp_path) -> None:
         bootstrap=True,
         random_state=42,
     ).fit(frame, labels)
-    fault = RandomForestClassifier(n_estimators=7, random_state=42).fit(frame, labels + 2)
+    fault_labels = (values[:, 0] > np.median(values[:, 0])).astype(int) + 2
+    fault = RandomForestClassifier(n_estimators=7, random_state=42).fit(frame, fault_labels)
     artifact_path = tmp_path / "model.joblib"
     metadata = {
         "model_version": "test-model",
