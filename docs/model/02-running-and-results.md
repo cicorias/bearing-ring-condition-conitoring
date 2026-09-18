@@ -56,6 +56,8 @@ Python dependencies resolve from PyPI through `uv`.
 
 The production artifact is retrained on all 735 rings after evaluation, so its sample request is a
 format and inference demonstration rather than an additional held-out score.
+Only load locally generated, trusted `model.joblib` files because joblib artifacts use Python object
+serialization.
 
 ## Command-line inference
 

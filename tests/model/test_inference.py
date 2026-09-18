@@ -38,10 +38,15 @@ def test_inference_loads_sklearn_forest_artifact(tmp_path) -> None:
     )
 
     engine = InferenceEngine.load(artifact_path)
-    features = dict(zip(metadata["feature_names"], values[0], strict=True))
+    row_index = int(np.argmax(binary.predict_proba(frame)[:, 1]))
+    features = dict(zip(metadata["feature_names"], values[row_index], strict=True))
     prediction = engine.predict(features)
 
     np.testing.assert_allclose(
         list(prediction.binary_probabilities.values()),
-        binary.predict_proba(frame.iloc[[0]])[0],
+        binary.predict_proba(frame.iloc[[row_index]])[0],
+    )
+    np.testing.assert_allclose(
+        list(prediction.fault_probabilities.values()),
+        fault.predict_proba(frame.iloc[[row_index]])[0],
     )
