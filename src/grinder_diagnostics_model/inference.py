@@ -45,6 +45,9 @@ class InferenceEngine:
         if not artifact_path.is_file():
             raise FileNotFoundError(f"Model artifact not found: {artifact_path}")
         payload = joblib.load(artifact_path)
+        required_keys = {"format_version", "metadata", "binary", "fault"}
+        if not isinstance(payload, dict) or not required_keys <= payload.keys():
+            raise ValueError("Invalid model artifact")
         if payload.get("format_version") != 1:
             raise ValueError("Unsupported model artifact format")
         return cls(

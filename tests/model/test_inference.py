@@ -1,6 +1,7 @@
 import joblib
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 
@@ -51,3 +52,11 @@ def test_inference_loads_sklearn_forest_artifact(tmp_path) -> None:
         list(prediction.fault_probabilities.values()),
         fault.predict_proba(frame.iloc[[row_index]])[0],
     )
+
+
+def test_inference_rejects_malformed_artifact(tmp_path) -> None:
+    artifact_path = tmp_path / "model.joblib"
+    joblib.dump([], artifact_path)
+
+    with pytest.raises(ValueError, match="Invalid model artifact"):
+        InferenceEngine.load(artifact_path)
