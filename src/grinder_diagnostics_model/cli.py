@@ -58,6 +58,7 @@ def predict() -> None:
         "--model",
         type=Path,
         default=DEFAULT_ARTIFACT_DIR / "model.joblib",
+        help="Trusted local joblib model artifact",
     )
     args = parser.parse_args()
     payload = json.loads(args.request.read_text(encoding="utf-8"))

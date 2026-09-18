@@ -40,14 +40,17 @@ class InferenceEngine:
 
     @classmethod
     def load(cls, artifact_path: Path) -> InferenceEngine:
-        """Load a locally generated, trusted joblib artifact."""
+        """Load a trusted local artifact; joblib may execute code during deserialization."""
         artifact_path = artifact_path.resolve()
         if not artifact_path.is_file():
             raise FileNotFoundError(f"Model artifact not found: {artifact_path}")
         payload = joblib.load(artifact_path)
         required_keys = {"format_version", "metadata", "binary", "fault"}
-        if not isinstance(payload, dict) or not required_keys <= payload.keys():
-            raise ValueError("Invalid model artifact")
+        if not isinstance(payload, dict):
+            raise ValueError(f"Invalid model artifact {artifact_path}: expected a mapping")
+        missing_keys = sorted(required_keys - payload.keys())
+        if missing_keys:
+            raise ValueError(f"Invalid model artifact {artifact_path}: missing keys {missing_keys}")
         if payload.get("format_version") != 1:
             raise ValueError("Unsupported model artifact format")
         return cls(
