@@ -48,7 +48,7 @@ POST /v1/predict
 ```
 
 The caller supplies a request identifier and all 58 production features. The endpoint validates the
-exact feature schema, runs the PyTorch-exported random forests, and returns the typed prediction.
+exact feature schema, runs the scikit-learn random forests, and returns the typed prediction.
 
 ```json
 {
@@ -709,7 +709,7 @@ The application workloads in this proposal can all be packaged as Azure Containe
 
 | Local component | Aspire resource | Initial Azure target |
 |---|---|---|
-| PyTorch FastAPI model API | Python Uvicorn app or explicit container | Private Azure Container App |
+| scikit-learn FastAPI model API | Python Uvicorn app or explicit container | Private Azure Container App |
 | Microsoft Agent Framework workflow | Python app or explicit container | Private Azure Container App |
 | Gradio dashboard | Python app or explicit container | Azure Container App with authenticated ingress |
 | Statistical simulator | Python executable, worker, or explicit container | Internal Container App or deployment-only demo process |
@@ -768,7 +768,7 @@ release-management concern:
 | Target-specific deployment coverage | A resource without publish or deploy pipeline steps may be ignored or produce only an artifact | Keep application compute on the supported Azure Container Apps target; inspect `aspire publish` output and `aspire deploy --list-steps` |
 | Azure authentication and administration | Local `aspire deploy` uses an Azure credential source and Aspire is not a general Azure administration shell | Use Azure CLI or workload identity for authentication and retain `az` only for diagnostics or administrative operations, not routine application deployment |
 | Non-container executables | Local processes do not automatically imply a supported production target | Package every application workload as a tested ACA image or add a supported Aspire compute integration |
-| Generated Python images | Automatically generated Dockerfiles may not satisfy the managed Python feed, `uv.lock`, direct PyTorch index, native libraries, or artifact-copy requirements | Use explicit reviewed Dockerfiles for the model, workflow, and dashboard until generated images are proven equivalent |
+| Generated Python images | Automatically generated Dockerfiles may not satisfy `uv.lock`, native libraries, or artifact-copy requirements | Use explicit reviewed Dockerfiles for the model, workflow, and dashboard until generated images are proven equivalent |
 | Managed or specialized compute | A future managed Foundry-hosted agent or unsupported Azure compute type may lack a direct Aspire deployment resource | Keep the first Agent Framework app in ACA; use custom Bicep, `ConfigureInfrastructure`, or an external deployment stage for unsupported targets |
 | Enterprise infrastructure | Shared networks, private DNS, policy-controlled resources, cross-subscription resources, and organization naming may exceed defaults | Use `AsExisting`, typed `ConfigureInfrastructure`, infrastructure resolvers, or custom Bicep referenced by the AppHost |
 | Environment teardown | The Aspire publish/deploy workflow does not provide the same explicit environment-removal contract previously expected from `azd down` | Keep resources environment-scoped and define a reviewed cleanup runbook or custom pipeline step before creating disposable cloud environments |

@@ -7,7 +7,7 @@ Start here. The numbered files are ordered for a human reader.
 1. [Model data](model/00-data-overview.md) explains coverage, file contents, and known
    uncertainties.
 2. [Reproduction plan](model/01-reproduction-plan.md) gives the path from raw TDMS files to
-   PyTorch-loadable random forests.
+   scikit-learn random forests.
 3. [Running and results](model/02-running-and-results.md) shows measured results and CLI/API use.
 
 ## Overall system
@@ -32,6 +32,4 @@ Start here. The numbered files are ordered for a human reader.
   processing will read one extracted ring file at a time.
 - Python and `uv` will be pinned through `mise`; project commands will run through `mise`.
 - No project command will install into or run against the system Python environment.
-- On the managed device, all Python packages must resolve through
-  `https://packagefeedproxy.microsoft.io/pypi/simple/`, as configured in `~/.config/uv/uv.toml`.
-  PyTorch is the explicit exception and uses its direct CPU-only package index.
+- Python dependencies resolve from PyPI through `uv`.

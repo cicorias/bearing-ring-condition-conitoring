@@ -15,7 +15,7 @@ Two Random Forests turn raw bearing-ring grinder signals into a typed diagnostic
 <div class="metric-grid">
   <div class="card"><div class="metric">735</div><div>measured grinding cycles</div></div>
   <div class="card"><div class="metric">2</div><div>production Random Forests</div></div>
-  <div class="card"><div class="metric">0.0</div><div>PyTorch parity delta</div></div>
+  <div class="card"><div class="metric">58</div><div>production features</div></div>
 </div>
 
 <!--
@@ -151,7 +151,7 @@ mise run g:api:sample
 
 <!--
 Demo: Run these commands in separate terminals. Point out that CLI and HTTP responses are identical
-because both use the same PyTorch artifact and inference engine.
+because both use the same scikit-learn artifact and inference engine.
 -->
 
 ---
