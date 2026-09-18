@@ -60,7 +60,7 @@ class InferenceEngine:
             artifact_path=artifact_path,
         )
 
-    def _vector(self, features: dict[str, float]) -> pd.DataFrame:
+    def _feature_frame(self, features: dict[str, float]) -> pd.DataFrame:
         expected = set(self.feature_names)
         supplied = set(features)
         missing = sorted(expected - supplied)
@@ -77,7 +77,7 @@ class InferenceEngine:
         return pd.DataFrame([values], columns=self.feature_names, dtype="float64")
 
     def predict(self, features: dict[str, float]) -> Prediction:
-        values = self._vector(features)
+        values = self._feature_frame(features)
         binary_values = self.binary.predict_proba(values)[0].tolist()
         fault_values = self.fault.predict_proba(values)[0].tolist()
         binary_classes = [int(value) for value in self.metadata["binary_classes"]]

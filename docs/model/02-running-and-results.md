@@ -54,6 +54,8 @@ Python dependencies resolve from PyPI through `uv`.
 | `split-manifest.json` | Exact train/test ring IDs |
 | `feature-ranking.json` | Feature-selection output |
 
+The scikit-learn artifact replaces the previous PyTorch `.pt` format. Existing artifacts must be
+regenerated with `mise run d:model:train`.
 The production artifact is retrained on all 735 rings after evaluation, so its sample request is a
 format and inference demonstration rather than an additional held-out score.
 Only load locally generated, trusted `model.joblib` files because joblib artifacts use Python object
