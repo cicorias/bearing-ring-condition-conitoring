@@ -18,6 +18,7 @@ from sklearn.preprocessing import StandardScaler
 from grinder_diagnostics_model.constants import (
     CONDITION_MONITORING_SENSORS,
     FAULT_LABELS,
+    MODEL_ARTIFACT_NAME,
     PROCESS_CONTROL_SENSORS,
 )
 from grinder_diagnostics_model.features import feature_names
@@ -253,7 +254,7 @@ def train_and_export(
         "binary": binary,
         "fault": fault,
     }
-    joblib.dump(payload, artifact_dir / "model.joblib")
+    joblib.dump(payload, artifact_dir / MODEL_ARTIFACT_NAME)
     (artifact_dir / "metadata.json").write_text(
         json.dumps(metadata, indent=2, sort_keys=True),
         encoding="utf-8",

@@ -56,7 +56,10 @@ def test_inference_loads_sklearn_forest_artifact(tmp_path) -> None:
 
 def test_inference_rejects_malformed_artifact(tmp_path) -> None:
     artifact_path = tmp_path / "model.joblib"
-    joblib.dump([], artifact_path)
+    joblib.dump(
+        {"format_version": 1, "metadata": {}, "binary": object(), "fault": object()},
+        artifact_path,
+    )
 
-    with pytest.raises(ValueError, match="Invalid model artifact"):
+    with pytest.raises(ValueError, match="classifiers must be random forests"):
         InferenceEngine.load(artifact_path)

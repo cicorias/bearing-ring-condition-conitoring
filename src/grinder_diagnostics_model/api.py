@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
-from grinder_diagnostics_model.constants import DEFAULT_ARTIFACT_DIR
+from grinder_diagnostics_model.constants import DEFAULT_ARTIFACT_DIR, MODEL_ARTIFACT_NAME
 from grinder_diagnostics_model.inference import InferenceEngine
 
 
@@ -37,7 +37,7 @@ def create_app(engine: InferenceEngine | None = None) -> FastAPI:
         if engine is not None:
             app.state.engine = engine
         else:
-            default_path = DEFAULT_ARTIFACT_DIR / "model.joblib"
+            default_path = DEFAULT_ARTIFACT_DIR / MODEL_ARTIFACT_NAME
             artifact_path = Path(os.getenv("GRINDER_DIAGNOSTICS_MODEL_PATH", default_path))
             app.state.engine = InferenceEngine.load(artifact_path)
         yield

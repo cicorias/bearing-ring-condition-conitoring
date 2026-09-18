@@ -53,6 +53,12 @@ class InferenceEngine:
             raise ValueError(f"Invalid model artifact {artifact_path}: missing keys {missing_keys}")
         if payload.get("format_version") != 1:
             raise ValueError("Unsupported model artifact format")
+        if not all(
+            isinstance(payload[name], RandomForestClassifier) for name in ("binary", "fault")
+        ):
+            raise ValueError(
+                f"Invalid model artifact {artifact_path}: classifiers must be random forests"
+            )
         return cls(
             metadata=payload["metadata"],
             binary=payload["binary"],

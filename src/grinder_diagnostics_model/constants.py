@@ -3,6 +3,7 @@ from pathlib import Path
 DEFAULT_DATA_ROOT = Path("data/source")
 DEFAULT_FEATURE_PATH = Path("data/generated/grinder-diagnostics-model/ring-features.parquet")
 DEFAULT_ARTIFACT_DIR = Path("artifacts/grinder-diagnostics-model")
+MODEL_ARTIFACT_NAME = "model.joblib"
 
 TEST_LABELS = {
     1: "baseline",

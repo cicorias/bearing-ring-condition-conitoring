@@ -9,6 +9,7 @@ import httpx
 from grinder_diagnostics_model.constants import (
     DEFAULT_ARTIFACT_DIR,
     DEFAULT_FEATURE_PATH,
+    MODEL_ARTIFACT_NAME,
 )
 from grinder_diagnostics_model.data import write_manifest
 from grinder_diagnostics_model.features import build_feature_table
@@ -57,7 +58,7 @@ def predict() -> None:
     parser.add_argument(
         "--model",
         type=Path,
-        default=DEFAULT_ARTIFACT_DIR / "model.joblib",
+        default=DEFAULT_ARTIFACT_DIR / MODEL_ARTIFACT_NAME,
         help="Trusted local joblib model artifact",
     )
     args = parser.parse_args()
