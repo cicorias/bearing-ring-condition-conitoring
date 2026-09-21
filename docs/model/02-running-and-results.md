@@ -41,24 +41,26 @@ mise run d:model:train
 mise run k:verify
 ```
 
-The managed Microsoft Python feed comes from `~/.config/uv/uv.toml`. PyTorch uses the explicit
-CPU-only index in `pyproject.toml`.
+Python dependencies resolve from PyPI through `uv`.
 
 ## Generated model files
 
 | File | Purpose |
 |---|---|
-| `model.pt` | PyTorch-loadable two-forest inference artifact |
+| `model.joblib` | scikit-learn two-forest inference artifact |
 | `metadata.json` | Feature order, labels, threshold, version, and provenance |
 | `sample-request.json` | Valid request generated from an evaluation-split row |
 | `metrics.json` | Evaluation results |
 | `split-manifest.json` | Exact train/test ring IDs |
 | `feature-ranking.json` | Feature-selection output |
-| `reference-models.joblib` | scikit-learn reference used only to verify export parity |
 
-The PyTorch and reference forests have a maximum observed probability difference of `0.0`.
+The scikit-learn artifact replaces the previous PyTorch `.pt` format. Existing artifacts must be
+regenerated with `mise run d:model:train`.
+
 The production artifact is retrained on all 735 rings after evaluation, so its sample request is a
 format and inference demonstration rather than an additional held-out score.
+Only load locally generated, trusted `model.joblib` files because joblib artifacts use Python object
+serialization.
 
 ## Command-line inference
 

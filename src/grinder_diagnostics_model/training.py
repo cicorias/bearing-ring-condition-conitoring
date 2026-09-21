@@ -9,7 +9,6 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
-import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 from sklearn.model_selection import train_test_split
@@ -19,10 +18,10 @@ from sklearn.preprocessing import StandardScaler
 from grinder_diagnostics_model.constants import (
     CONDITION_MONITORING_SENSORS,
     FAULT_LABELS,
+    MODEL_ARTIFACT_NAME,
     PROCESS_CONTROL_SENSORS,
 )
 from grinder_diagnostics_model.features import feature_names
-from grinder_diagnostics_model.torch_forest import from_sklearn
 
 
 @dataclass(frozen=True)
@@ -224,28 +223,6 @@ def train_and_export(
     fault = _new_forest(config)
     fault.fit(fault_frame[final_selected], fault_frame["test"])
 
-    torch_binary = from_sklearn(binary)
-    torch_fault = from_sklearn(fault)
-    all_values = torch.tensor(frame[final_selected].to_numpy(), dtype=torch.float64)
-    with torch.no_grad():
-        binary_delta = np.max(
-            np.abs(torch_binary(all_values).numpy() - binary.predict_proba(frame[final_selected]))
-        )
-        fault_values = torch.tensor(
-            fault_frame[final_selected].to_numpy(), dtype=torch.float64
-        )
-        fault_delta = np.max(
-            np.abs(
-                torch_fault(fault_values).numpy()
-                - fault.predict_proba(fault_frame[final_selected])
-            )
-        )
-    tolerance = 1e-12
-    if binary_delta > tolerance or fault_delta > tolerance:
-        raise ValueError(
-            f"PyTorch export parity failed: binary={binary_delta}, fault={fault_delta}"
-        )
-
     artifact_dir.mkdir(parents=True, exist_ok=True)
     feature_table_sha256 = _feature_table_hash(feature_path)
     implementation_sha256 = _implementation_hash()
@@ -270,22 +247,14 @@ def train_and_export(
         "fault_labels": FAULT_LABELS,
         "binary_threshold": config.binary_threshold,
         "training": asdict(config),
-        "pytorch_max_probability_delta": {
-            "binary": float(binary_delta),
-            "fault": float(fault_delta),
-        },
     }
     payload = {
         "format_version": 1,
         "metadata": metadata,
-        "binary": torch_binary.to_payload(),
-        "fault": torch_fault.to_payload(),
+        "binary": binary,
+        "fault": fault,
     }
-    torch.save(payload, artifact_dir / "model.pt")
-    joblib.dump(
-        {"binary": binary, "fault": fault, "feature_names": final_selected},
-        artifact_dir / "reference-models.joblib",
-    )
+    joblib.dump(payload, artifact_dir / MODEL_ARTIFACT_NAME)
     (artifact_dir / "metadata.json").write_text(
         json.dumps(metadata, indent=2, sort_keys=True),
         encoding="utf-8",

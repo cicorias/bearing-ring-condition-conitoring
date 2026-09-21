@@ -1,12 +1,12 @@
 from pathlib import Path
 
+import pandas as pd
 from fastapi.testclient import TestClient
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 
 from grinder_diagnostics_model.api import create_app
 from grinder_diagnostics_model.inference import InferenceEngine
-from grinder_diagnostics_model.torch_forest import from_sklearn
 
 
 def _engine() -> InferenceEngine:
@@ -17,12 +17,14 @@ def _engine() -> InferenceEngine:
         n_redundant=0,
         random_state=7,
     )
-    binary = RandomForestClassifier(n_estimators=3, random_state=7).fit(values, binary_labels)
+    columns = ["f0", "f1", "f2", "f3"]
+    frame = pd.DataFrame(values, columns=columns)
+    binary = RandomForestClassifier(n_estimators=3, random_state=7).fit(frame, binary_labels)
     fault_labels = (binary_labels % 2) + 2
-    fault = RandomForestClassifier(n_estimators=3, random_state=7).fit(values, fault_labels)
+    fault = RandomForestClassifier(n_estimators=3, random_state=7).fit(frame, fault_labels)
     metadata = {
         "model_version": "test-model",
-        "feature_names": ["f0", "f1", "f2", "f3"],
+        "feature_names": columns,
         "binary_classes": [0, 1],
         "fault_classes": [2, 3],
         "fault_labels": {2: "fault_a", 3: "fault_b"},
@@ -31,9 +33,9 @@ def _engine() -> InferenceEngine:
     }
     return InferenceEngine(
         metadata=metadata,
-        binary=from_sklearn(binary),
-        fault=from_sklearn(fault),
-        artifact_path=Path("/test/model.pt"),
+        binary=binary,
+        fault=fault,
+        artifact_path=Path("/test/model.joblib"),
     )
 
 

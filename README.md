@@ -22,7 +22,7 @@ without receiving raw sensor arrays or depending on model-training code.
 | Complete 735-ring data validation | Implemented |
 | Idle-segment signal feature extraction | Implemented |
 | Binary and five-class Random Forest training | Implemented |
-| PyTorch-loadable forest artifact | Implemented |
+| scikit-learn forest artifact | Implemented |
 | CLI and FastAPI inference | Implemented |
 | HTTPYac API contract tests | Implemented |
 | Slidev demonstration | Implemented |
@@ -134,8 +134,8 @@ close Python reconstruction rather than an exact MATLAB port: the paper does not
 filter cutoff, segmentation threshold, NCA setting, or random seed. Both the paper-like split and a
 more conservative dressing-cycle-grouped split are reported to make leakage risk visible.
 
-The exported PyTorch forests match the corresponding scikit-learn probabilities exactly on the
-complete verification set (`0.0` maximum observed probability delta).
+The production artifact contains the fitted scikit-learn forests used directly by CLI and API
+inference.
 
 See [model results and usage](docs/model/02-running-and-results.md) for confusion matrices, reduced
 sensor experiments, artifact descriptions, and limitations.
@@ -173,7 +173,7 @@ data/generated/grinder-diagnostics-model/
 artifacts/grinder-diagnostics-model/
 ```
 
-The primary inference artifact is `artifacts/grinder-diagnostics-model/model.pt`.
+The primary inference artifact is `artifacts/grinder-diagnostics-model/model.joblib`.
 
 ### Run local inference
 
